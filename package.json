@@ -1,0 +1,27 @@
+{
+  "name": "imovies",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "IMovies - Movie ticket booking made simple. A production-ready MERN stack cinema ticketing platform.",
+  "scripts": {
+    "start": "node backend/server.js",
+    "server": "cd backend && npm start",
+    "client": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "seed": "cd backend && npm run seed"
+  },
+  "keywords": [
+    "mern",
+    "cinema",
+    "movie-ticket-booking",
+    "react",
+    "nodejs",
+    "express",
+    "mongodb",
+    "socket.io",
+    "jwt",
+    "bootstrap"
+  ],
+  "author": "IMovies Team",
+  "license": "MIT"
+}

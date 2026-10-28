@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMovies - Movie Ticket Booking Made Simple</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #e50914;
+      --primary-hover: #b80710;
+      --accent-gold: #f59e0b;
+      --accent-blue: #3b82f6;
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --border: rgba(255, 255, 255, 0.08);
+      --seat-avail: #334155;
+      --seat-selected: #f59e0b;
+      --seat-booked: #1e293b;
+      --seat-locked: #ef4444;
+    }
+    body {
+      margin: 0;
+      background-color: var(--bg-dark);
+      color: #f8fafc;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .cinema-navbar {
+      background-color: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+    }
+    .cinema-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+    .cinema-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+      border-color: rgba(229, 9, 20, 0.3);
+    }
+    .glow-btn {
+      background: linear-gradient(135deg, #e50914 0%, #b80710 100%);
+      color: #ffffff !important;
+      border: none;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 9px 18px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.35);
+    }
+    .glow-btn:hover {
+      background: linear-gradient(135deg, #f01420 0%, #cb0912 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(229, 9, 20, 0.5);
+    }
+    .glow-btn-gold {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #0f172a !important;
+      border: none;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 9px 18px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
+    }
+    .hero-banner {
+      position: relative;
+      min-height: 480px;
+      background-size: cover;
+      background-position: center 25%;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.8) 50%, rgba(15,23,42,0.4) 100%);
+    }
+    .screen-curve {
+      height: 24px;
+      background: linear-gradient(180deg, rgba(59, 130, 246, 0.6) 0%, rgba(59, 130, 246, 0.05) 100%);
+      border-top: 4px solid #60a5fa;
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+      box-shadow: 0 -10px 30px rgba(96, 165, 250, 0.4);
+    }
+    .seat-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .seat-btn.available { background-color: var(--seat-avail); color: #cbd5e1; }
+    .seat-btn.available:hover { background-color: #475569; color: #fff; transform: scale(1.18); }
+    .seat-btn.selected { background-color: var(--seat-selected); color: #0f172a; border-color: #fef08a; transform: scale(1.15); box-shadow: 0 0 10px rgba(245,158,11,0.6); }
+    .seat-btn.booked { background-color: var(--seat-booked); color: #475569; border-color: #334155; cursor: not-allowed; opacity: 0.5; }
+    .ticket-wrapper {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+    }
+    .ticket-notch-left, .ticket-notch-right {
+      position: absolute;
+      top: 50%;
+      width: 24px;
+      height: 24px;
+      background-color: var(--bg-dark);
+      border-radius: 50%;
+      transform: translateY(-50%);
+    }
+    .ticket-notch-left { left: -12px; }
+    .ticket-notch-right { right: -12px; }
+    .badge-gold { background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+    .badge-red { background-color: rgba(229, 9, 20, 0.15); color: #f87171; border: 1px solid rgba(229, 9, 20, 0.3); padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+    .badge-blue { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+    .cinema-input {
+      background-color: #0f172a !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      color: #f8fafc !important;
+      border-radius: 8px;
+    }
+    .cinema-input:focus { border-color: #e50914 !important; box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.25) !important; }
+    .cinema-modal { background-color: #1e293b; color: #f8fafc; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; }
+  </style>
+
+  <!-- React 18 & ReactDOM -->
+  <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <!-- Babel Standalone for in-browser JSX parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.4/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- SEED CATALOG DATA ---
+    const INITIAL_MOVIES = [
+      {
+        _id: 'm1',
+        title: 'Dune: Part Two',
+        description: 'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the universe, he endeavors to prevent a terrible future only he can foresee.',
+        genre: ['Sci-Fi', 'Adventure', 'Action'],
+        language: ['English', 'Hindi'],
+        duration: 166,
+        releaseDate: '2024-03-01',
+        poster: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80',
+        banner: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1400&q=80',
+        trailerUrl: 'https://www.youtube.com/embed/Way9Dexny3w',
+        rating: 8.8,
+        votesCount: 4120,
+        director: 'Denis Villeneuve',
+        certificate: 'UA',
+        status: 'now_showing',
+        cast: ['Timothée Chalamet', 'Zendaya', 'Rebecca Ferguson'],
+      },
+      {
+        _id: 'm2',
+        title: 'Oppenheimer',
+        description: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II, exploring both the triumph and profound moral crisis.',
+        genre: ['Biography', 'Drama', 'History'],
+        language: ['English'],
+        duration: 180,
+        releaseDate: '2023-07-21',
+        poster: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=600&q=80',
+        banner: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1400&q=80',
+        trailerUrl: 'https://www.youtube.com/embed/uYPbbksJxIg',
+        rating: 8.9,
+        votesCount: 5890,
+        director: 'Christopher Nolan',
+        certificate: 'A',
+        status: 'now_showing',
+        cast: ['Cillian Murphy', 'Emily Blunt', 'Robert Downey Jr.'],
+      },
+      {
+        _id: 'm3',
+        title: 'Spider-Man: Beyond the Spider-Verse',
+        description: 'Miles Morales embarks across the Multiverse once again with Gwen Stacy and an elite team of Spider-People to protect its very existence from an unprecedented cosmic menace.',
+        genre: ['Animation', 'Action', 'Sci-Fi'],
+        language: ['English', 'Hindi', 'Tamil'],
+        duration: 140,
+        releaseDate: '2025-06-15',
+        poster: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?auto=format&fit=crop&w=600&q=80',
+        banner: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1400&q=80',
+        trailerUrl: 'https://www.youtube.com/embed/cqGjhVJWtEg',
+        rating: 9.1,
+        votesCount: 3200,
+        director: 'Joaquim Dos Santos',
+        certificate: 'U',
+        status: 'now_showing',
+        cast: ['Shameik Moore', 'Hailee Steinfeld'],
+      },
+      {
+        _id: 'm4',
+        title: 'Interstellar: 10th Anniversary',
+        description: 'When Earth becomes uninhabitable in the future, a farmer and ex-NASA pilot, Joseph Cooper, is tasked to pilot a spacecraft along with a team of researchers to find a new planet for humans.',
+        genre: ['Adventure', 'Drama', 'Sci-Fi'],
+        language: ['English'],
+        duration: 169,
+        releaseDate: '2024-11-01',
+        poster: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80',
+        banner: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1400&q=80',
+        trailerUrl: 'https://www.youtube.com/embed/zSWdZVtXT7E',
+        rating: 8.7,
+        votesCount: 6500,
+        director: 'Christopher Nolan',
+        certificate: 'UA',
+        status: 'now_showing',
+        cast: ['Matthew McConaughey', 'Anne Hathaway'],
+      },
+      {
+        _id: 'm5',
+        title: 'Gladiator II',
+        description: 'Years after witnessing the death of Maximus, Lucius must enter the Colosseum after his home is conquered by tyrannical emperors who lead Rome with an iron fist.',
+        genre: ['Action', 'Adventure', 'Drama'],
+        language: ['English', 'Hindi'],
+        duration: 148,
+        releaseDate: '2024-11-15',
+        poster: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80',
+        banner: 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=1400&q=80',
+        trailerUrl: 'https://www.youtube.com/embed/4rgYUipGJNo',
+        rating: 8.4,
+        votesCount: 2180,
+        director: 'Ridley Scott',
+        certificate: 'A',
+        status: 'now_showing',
+        cast: ['Paul Mescal', 'Pedro Pascal', 'Denzel Washington'],
+      },
+      {
+        _id: 'm6',
+        title: 'Avatar: Fire and Ash',
+        description: 'The journey of Jake Sully and Neytiri continues on Pandora as they encounter the Ash People, an aggressive volcanic clan of Na\'vi.',
+        genre: ['Action', 'Adventure', 'Fantasy', 'Sci-Fi'],
+        language: ['English', 'Hindi'],
+        duration: 175,
+        releaseDate: '2025-12-19',
+        poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
+        banner: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1400&q=80',
+        trailerUrl: 'https://www.youtube.com/embed/d9MyW72ELq0',
+        rating: 8.6,
+        votesCount: 950,
+        director: 'James Cameron',
+        certificate: 'UA',
+        status: 'upcoming',
+        cast: ['Sam Worthington', 'Zoe Saldaña'],
+      }
+    ];
+
+    const THEATRES = [
+      {
+        _id: 't1',
+        name: 'PVR INOX Superplex Luxe',
+        city: 'Mumbai',
+        location: 'Phoenix Palladium, Lower Parel',
+        facilities: ['IMAX Laser 3D', 'Dolby Atmos', 'Recliner Seating', 'Valet Parking'],
+      },
+      {
+        _id: 't2',
+        name: 'Cinepolis VIP MegaMall',
+        city: 'Bengaluru',
+        location: 'Forum Mall, Koramangala',
+        facilities: ['4DX Dynamic Seats', 'Dolby Atmos 7.1', 'Gourmet Lounge'],
+      },
+      {
+        _id: 't3',
+        name: 'Grand CineStar Horizon',
+        city: 'Delhi NCR',
+        location: 'Cyber Hub, Gurugram',
+        facilities: ['4K Laser Projection', 'Dolby Atmos', 'Food Court'],
+      },
+      {
+        _id: 't4',
+        name: 'Prasad Multiplex IMAX',
+        city: 'Hyderabad',
+        location: 'NTR Gardens, Khairatabad',
+        facilities: ['Giant IMAX Screen', 'Dolby 7.1', 'Gaming Arena'],
+      }
+    ];
+
+    const generateSeats = () => {
+      const seats = [];
+      const rows = [
+        { name: 'A', tier: 'vip', price: 450 },
+        { name: 'B', tier: 'vip', price: 450 },
+        { name: 'C', tier: 'premium', price: 300 },
+        { name: 'D', tier: 'premium', price: 300 },
+        { name: 'E', tier: 'standard', price: 200 },
+        { name: 'F', tier: 'standard', price: 200 },
+      ];
+      for (const r of rows) {
+        for (let col = 1; col <= 10; col++) {
+          const isBooked = (r.name === 'B' && (col === 4 || col === 5)) || (r.name === 'C' && col === 8);
+          seats.push({
+            seatId: `${r.name}${col}`,
+            row: r.name,
+            col,
+            tier: r.tier,
+            price: r.price,
+            status: isBooked ? 'booked' : 'available',
+          });
+        }
+      }
+      return seats;
+    };
+
+    // --- MAIN REACT APPLICATION ---
+    function App() {
+      // Navigation / Routing state
+      const [currentView, setCurrentView] = useState('home'); // 'home', 'movies', 'details', 'booking', 'checkout', 'success', 'my-bookings', 'admin', 'login'
+      const [selectedCity, setSelectedCity] = useState('All Cities');
+      const [selectedMovie, setSelectedMovie] = useState(INITIAL_MOVIES[0]);
+      const [selectedShow, setSelectedShow] = useState(null);
+
+      // Auth state
+      const [user, setUser] = useState({
+        _id: 'u1',
+        name: 'Alex Johnson',
+        email: 'alex@example.com',
+        role: 'user',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+      });
+
+      // Data state
+      const [movies, setMovies] = useState(INITIAL_MOVIES);
+      const [selectedSeats, setSelectedSeats] = useState([]);
+      const [seatMatrix, setSeatMatrix] = useState(generateSeats());
+      const [bookings, setBookings] = useState([
+        {
+          _id: 'b1',
+          bookingNumber: 'IM-2026-492817',
+          movieTitle: 'Dune: Part Two',
+          moviePoster: INITIAL_MOVIES[0].poster,
+          theatreName: 'PVR INOX Superplex Luxe',
+          screenName: 'Audi 1 - IMAX Laser',
+          showDate: new Date().toISOString().split('T')[0],
+          showTime: '06:15 PM',
+          seats: ['C5', 'C6'],
+          totalAmount: 738,
+          bookingStatus: 'confirmed',
+          createdAt: new Date().toISOString(),
+        }
+      ]);
+      const [latestBooking, setLatestBooking] = useState(null);
+      const [ticketModalBooking, setTicketModalBooking] = useState(null);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [genreFilter, setGenreFilter] = useState('all');
+
+      // Countdown Timer for seat lock (8 mins)
+      const [lockTimer, setLockTimer] = useState(480);
+
+      useEffect(() => {
+        if (currentView === 'checkout') {
+          const timer = setInterval(() => {
+            setLockTimer(prev => prev > 1 ? prev - 1 : 480);
+          }, 1000);
+          return () => clearInterval(timer);
+        }
+      }, [currentView]);
+
+      // Seat selection toggle
+      const handleSeatClick = (seat) => {
+        if (seat.status === 'booked') return;
+        if (selectedSeats.includes(seat.seatId)) {
+          setSelectedSeats(prev => prev.filter(s => s !== seat.seatId));
+        } else {
+          if (selectedSeats.length >= 8) {
+            alert('Maximum 8 seats allowed per booking');
+            return;
+          }
+          setSelectedSeats(prev => [...prev, seat.seatId]);
+        }
+      };
+
+      // Pricing Calculations
+      const seatDetails = selectedSeats.map(id => seatMatrix.find(s => s.seatId === id));
+      const ticketTotal = seatDetails.reduce((sum, s) => sum + (s?.price || 0), 0);
+      const convFee = selectedSeats.length * 15;
+      const gst = Math.round((ticketTotal + convFee) * 0.18);
+      const grandTotal = ticketTotal + convFee + gst;
+
+      // Finalize Booking
+      const handleConfirmPayment = () => {
+        const newBookingNum = `IM-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+        const newBooking = {
+          _id: `b_${Date.now()}`,
+          bookingNumber: newBookingNum,
+          movieTitle: selectedMovie.title,
+          moviePoster: selectedMovie.poster,
+          theatreName: selectedShow?.theatreName || 'PVR INOX Superplex Luxe',
+          screenName: selectedShow?.screenName || 'Audi 1 - IMAX 3D Laser',
+          showDate: selectedShow?.date || new Date().toISOString().split('T')[0],
+          showTime: selectedShow?.time || '06:15 PM',
+          seats: selectedSeats,
+          totalAmount: grandTotal,
+          bookingStatus: 'confirmed',
+          createdAt: new Date().toISOString(),
+        };
+
+        // Mark seats as booked
+        setSeatMatrix(prev => prev.map(s => selectedSeats.includes(s.seatId) ? { ...s, status: 'booked' } : s));
+        setBookings([newBooking, ...bookings]);
+        setLatestBooking(newBooking);
+        setSelectedSeats([]);
+        setCurrentView('success');
+      };
+
+      // Cancel Booking
+      const handleCancelBooking = (bookingId) => {
+        if (!confirm('Are you sure you want to cancel this booking? You will receive an 85% refund.')) return;
+        setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, bookingStatus: 'cancelled' } : b));
+        alert('Booking cancelled successfully. Refund initiated.');
+      };
+
+      // Add Movie (Admin)
+      const handleAddMovie = (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const movieObj = {
+          _id: `m_${Date.now()}`,
+          title: form.title.value,
+          description: form.description.value,
+          genre: form.genre.value.split(',').map(g => g.trim()),
+          language: ['English', 'Hindi'],
+          duration: Number(form.duration.value) || 150,
+          releaseDate: new Date().toISOString().split('T')[0],
+          poster: form.poster.value || 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80',
+          banner: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1400&q=80',
+          trailerUrl: form.trailerUrl.value || 'https://www.youtube.com/embed/Way9Dexny3w',
+          rating: Number(form.rating.value) || 8.5,
+          certificate: form.certificate.value || 'UA',
+          status: 'now_showing',
+          director: form.director.value || 'Director',
+          cast: ['Lead Actor', 'Co-Star'],
+        };
+        setMovies([movieObj, ...movies]);
+        alert(`Movie "${movieObj.title}" added to catalog!`);
+        form.reset();
+      };
+
+      // Switch role quick helper
+      const switchRole = (newRole) => {
+        if (newRole === 'admin') {
+          setUser({ _id: 'admin1', name: 'Cinema Admin', email: 'admin@imovies.com', role: 'admin', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80' });
+        } else {
+          setUser({ _id: 'u1', name: 'Alex Johnson', email: 'alex@example.com', role: 'user', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80' });
+        }
+      };
+
+      // Filtered movies
+      const filteredMovies = movies.filter(m => {
+        const matchesSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) || m.director?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesGenre = genreFilter === 'all' || m.genre.some(g => g.toLowerCase() === genreFilter.toLowerCase());
+        return matchesSearch && matchesGenre;
+      });
+
+      return (
+        <div>
+          {/* Top Navbar */}
+          <nav className="cinema-navbar py-2 px-3 px-md-4">
+            <div className="container-fluid d-flex align-items-center justify-content-between">
+              <div className="d-flex align-items-center" style={{ cursor: 'pointer' }} onClick={() => setCurrentView('home')}>
+                <div className="d-flex align-items-center justify-content-center me-2" style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg, #e50914, #b80710)' }}>
+                  <i className="bi bi-film text-white fs-5"></i>
+                </div>
+                <div>
+                  <span className="fs-4 fw-black text-white">I<span style={{ color: '#e50914' }}>MOVIES</span></span>
+                  <span className="d-none d-sm-block text-secondary" style={{ fontSize: '10px', marginTop: '-4px', letterSpacing: '1px' }}>CINEMA TICKETING</span>
+                </div>
+              </div>
+
+              {/* City selector */}
+              <div className="d-none d-md-flex align-items-center ms-3 me-auto">
+                <i className="bi bi-geo-alt-fill text-danger me-1"></i>
+                <select className="form-select form-select-sm cinema-input text-white border-0 py-1" style={{ width: '130px' }} value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)}>
+                  {['All Cities', 'Mumbai', 'Bengaluru', 'Delhi NCR', 'Hyderabad'].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              {/* Nav links */}
+              <div className="d-none d-lg-flex align-items-center gap-2 me-3">
+                <button className={`btn btn-sm ${currentView === 'home' ? 'text-white fw-bold bg-danger bg-opacity-25' : 'text-secondary'} rounded-pill px-3`} onClick={() => setCurrentView('home')}>
+                  <i className="bi bi-house me-1"></i> Home
+                </button>
+                <button className={`btn btn-sm ${currentView === 'movies' ? 'text-white fw-bold bg-danger bg-opacity-25' : 'text-secondary'} rounded-pill px-3`} onClick={() => setCurrentView('movies')}>
+                  <i className="bi bi-camera-reels me-1"></i> Movies
+                </button>
+                <button className={`btn btn-sm ${currentView === 'my-bookings' ? 'text-white fw-bold bg-danger bg-opacity-25' : 'text-secondary'} rounded-pill px-3`} onClick={() => setCurrentView('my-bookings')}>
+                  <i className="bi bi-ticket-perforated me-1"></i> My Bookings ({bookings.filter(b => b.bookingStatus === 'confirmed').length})
+                </button>
+                {user?.role === 'admin' && (
+                  <button className={`btn btn-sm ${currentView === 'admin' ? 'text-white fw-bold bg-warning bg-opacity-25' : 'text-warning'} rounded-pill px-3`} onClick={() => setCurrentView('admin')}>
+                    <i className="bi bi-shield-check me-1"></i> Admin Portal
+                  </button>
+                )}
+              </div>
+
+              {/* Role Switcher & User Profile */}
+              <div className="d-flex align-items-center gap-2">
+                <div className="d-none d-sm-flex align-items-center gap-1 me-2 bg-dark p-1 rounded-pill border border-secondary border-opacity-25">
+                  <button className={`btn btn-sm py-0.5 px-2 rounded-pill ${user?.role === 'user' ? 'btn-danger' : 'text-secondary'}`} style={{ fontSize: '11px' }} onClick={() => switchRole('user')}>
+                    Customer
+                  </button>
+                  <button className={`btn btn-sm py-0.5 px-2 rounded-pill ${user?.role === 'admin' ? 'btn-warning' : 'text-secondary'}`} style={{ fontSize: '11px' }} onClick={() => switchRole('admin')}>
+                    Admin
+                  </button>
+                </div>
+
+                <div className="d-flex align-items-center gap-2 cinema-card px-2 py-1 rounded-pill">
+                  <img src={user?.avatar} alt={user?.name} className="rounded-circle" style={{ width: 28, height: 28, objectFit: 'cover' }} />
+                  <span className="small fw-semibold text-white d-none d-sm-inline">{user?.name.split(' ')[0]}</span>
+                  <span className="badge badge-gold" style={{ fontSize: '9px' }}>{user?.role.toUpperCase()}</span>
+                </div>
+              </div>
+            </div>
+          </nav>
+
+          {/* MAIN CONTAINER VIEWS */}
+          <main className="container py-4 flex-grow-1">
+
+            {/* --- 1. HOME VIEW --- */}
+            {currentView === 'home' && (
+              <div>
+                {/* Hero Spotlight */}
+                <div className="hero-banner p-4 p-md-5 shadow-2xl" style={{ backgroundImage: `url(${movies[0].banner})` }}>
+                  <div className="hero-overlay"></div>
+                  <div className="position-relative text-white" style={{ maxWidth: '640px', zIndex: 2 }}>
+                    <div className="d-inline-flex align-items-center gap-2 mb-3">
+                      <span className="badge badge-gold"><i className="bi bi-stars me-1"></i> SPOTLIGHT BLOCKBUSTER</span>
+                      <span className="badge badge-red">{movies[0].certificate}</span>
+                      <span className="text-secondary small">★ {movies[0].rating}/10</span>
+                    </div>
+                    <h1 className="display-4 fw-black text-white mb-2">{movies[0].title}</h1>
+                    <p className="text-light text-opacity-75 mb-3" style={{ fontSize: '15px' }}>{movies[0].description}</p>
+                    <div className="d-flex flex-wrap gap-2 mb-4">
+                      {movies[0].genre.map(g => <span key={g} className="badge bg-dark bg-opacity-75 border border-secondary">{g}</span>)}
+                      <span className="badge bg-dark bg-opacity-75">{movies[0].duration} mins</span>
+                    </div>
+                    <div className="d-flex flex-wrap gap-3">
+                      <button className="btn glow-btn px-4 py-2" onClick={() => { setSelectedMovie(movies[0]); setCurrentView('details'); }}>
+                        <i className="bi bi-ticket-perforated me-1"></i> Book Tickets Now
+                      </button>
+                      <button className="btn btn-outline-light px-4 py-2" onClick={() => { setSelectedMovie(movies[0]); setCurrentView('details'); }}>
+                        <i className="bi bi-play-circle me-1"></i> View Trailer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Search & Genre Chips */}
+                <div className="cinema-card p-3 mb-4">
+                  <div className="row g-3 align-items-center">
+                    <div className="col-12 col-md-5">
+                      <div className="input-group">
+                        <span className="input-group-text cinema-input border-end-0 text-secondary"><i className="bi bi-search"></i></span>
+                        <input type="text" className="form-control cinema-input border-start-0" placeholder="Search movies, directors, actors..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-7 d-flex flex-wrap gap-2 justify-content-md-end">
+                      {['all', 'Action', 'Sci-Fi', 'Adventure', 'Drama', 'Animation'].map(g => (
+                        <button key={g} className={`btn btn-sm rounded-pill px-3 ${genreFilter === g ? 'glow-btn' : 'btn-outline-secondary text-light'}`} onClick={() => setGenreFilter(g)}>
+                          {g === 'all' ? 'All Genres' : g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Now Showing Grid */}
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h3 className="fw-black text-white mb-0"><i className="bi bi-fire text-danger me-2"></i>Now Showing in Theatres</h3>
+                  <button className="btn btn-sm btn-link text-danger text-decoration-none" onClick={() => setCurrentView('movies')}>View All Movies →</button>
+                </div>
+                <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+                  {filteredMovies.map(m => (
+                    <div key={m._id} className="col">
+                      <div className="cinema-card h-100 d-flex flex-column">
+                        <div className="position-relative" style={{ paddingTop: '140%', overflow: 'hidden' }}>
+                          <img src={m.poster} alt={m.title} className="position-absolute top-0 start-0 w-100 h-100" style={{ objectFit: 'cover' }} />
+                          <div className="position-absolute top-0 start-0 m-2 px-2 py-0.5 rounded-pill bg-dark bg-opacity-75 text-warning fw-bold small">
+                            ★ {m.rating}
+                          </div>
+                          <div className="position-absolute top-0 end-0 m-2 px-2 py-0.5 rounded bg-danger text-white fw-bold" style={{ fontSize: '11px' }}>
+                            {m.certificate}
+                          </div>
+                        </div>
+                        <div className="p-3 d-flex flex-column flex-grow-1">
+                          <h6 className="text-white fw-bold mb-1 text-truncate">{m.title}</h6>
+                          <span className="text-secondary small mb-2 d-block">{m.genre.slice(0, 2).join(', ')} • {m.duration}m</span>
+                          <button className="btn btn-sm glow-btn mt-auto w-100" onClick={() => { setSelectedMovie(m); setCurrentView('details'); }}>
+                            <i className="bi bi-ticket-perforated me-1"></i> Book Seats
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* --- 2. MOVIES CATALOG VIEW --- */}
+            {currentView === 'movies' && (
+              <div>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <div>
+                    <h2 className="fw-black text-white mb-1">Cinema Catalog</h2>
+                    <p className="text-secondary small mb-0">Browse all movies and current schedules</p>
+                  </div>
+                  <button className="btn btn-sm btn-outline-secondary" onClick={() => setCurrentView('home')}>← Back to Home</button>
+                </div>
+
+                <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+                  {filteredMovies.map(m => (
+                    <div key={m._id} className="col">
+                      <div className="cinema-card h-100 d-flex flex-column">
+                        <div className="position-relative" style={{ paddingTop: '140%', overflow: 'hidden' }}>
+                          <img src={m.poster} alt={m.title} className="position-absolute top-0 start-0 w-100 h-100" style={{ objectFit: 'cover' }} />
+                          <div className="position-absolute top-0 start-0 m-2 px-2 py-0.5 rounded-pill bg-dark bg-opacity-75 text-warning fw-bold small">
+                            ★ {m.rating}
+                          </div>
+                        </div>
+                        <div className="p-3 d-flex flex-column flex-grow-1">
+                          <h6 className="text-white fw-bold mb-1 text-truncate">{m.title}</h6>
+                          <span className="text-secondary small mb-2 d-block">{m.genre.join(', ')}</span>
+                          <button className="btn btn-sm glow-btn mt-auto w-100" onClick={() => { setSelectedMovie(m); setCurrentView('details'); }}>
+                            Select Showtimes
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* --- 3. MOVIE DETAILS & SHOWTIMES VIEW --- */}
+            {currentView === 'details' && selectedMovie && (
+              <div>
+                <button className="btn btn-sm btn-link text-secondary text-decoration-none p-0 mb-3" onClick={() => setCurrentView('home')}>
+                  ← Back to Movies
+                </button>
+                <div className="cinema-card p-4 mb-4">
+                  <div className="row g-4 align-items-center">
+                    <div className="col-12 col-md-3 text-center">
+                      <img src={selectedMovie.poster} alt={selectedMovie.title} className="rounded-3 shadow-lg w-100 object-fit-cover" style={{ maxHeight: '350px' }} />
+                    </div>
+                    <div className="col-12 col-md-9">
+                      <div className="d-flex align-items-center gap-2 mb-2">
+                        <span className="badge badge-red">{selectedMovie.certificate}</span>
+                        <span className="badge badge-gold">★ {selectedMovie.rating}/10</span>
+                        <span className="badge badge-blue">{selectedMovie.duration} mins</span>
+                      </div>
+                      <h2 className="fw-black text-white mb-2">{selectedMovie.title}</h2>
+                      <p className="text-secondary small mb-3"><strong>Director:</strong> {selectedMovie.director} • <strong>Genre:</strong> {selectedMovie.genre.join(', ')} • <strong>Cast:</strong> {selectedMovie.cast?.join(', ')}</p>
+                      <p className="text-light text-opacity-80 mb-4">{selectedMovie.description}</p>
+                      {selectedMovie.trailerUrl && (
+                        <div className="mb-3">
+                          <a href={selectedMovie.trailerUrl} target="_blank" rel="noreferrer" className="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i className="bi bi-play-circle me-1"></i> Watch Official Trailer on YouTube
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Showtimes Selection Module */}
+                <div className="cinema-card p-4">
+                  <h4 className="fw-bold text-white mb-3">Select Cinema & Showtime</h4>
+                  <div className="d-flex flex-column gap-3">
+                    {THEATRES.map(th => (
+                      <div key={th._id} className="p-3 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <div>
+                            <h6 className="text-white fw-bold mb-0"><i className="bi bi-geo-alt text-danger me-1"></i>{th.name}</h6>
+                            <span className="text-secondary small">{th.location}, {th.city}</span>
+                          </div>
+                          <div className="d-none d-sm-flex gap-1">
+                            {th.facilities.slice(0, 2).map(f => <span key={f} className="badge bg-dark border border-secondary text-secondary small">{f}</span>)}
+                          </div>
+                        </div>
+                        <div className="d-flex flex-wrap gap-2 mt-2">
+                          {['10:30 AM', '02:00 PM', '06:15 PM', '09:45 PM'].map(time => (
+                            <button
+                              key={time}
+                              className="btn btn-outline-danger btn-sm rounded-3 px-3 py-1.5 text-start"
+                              onClick={() => {
+                                setSelectedShow({
+                                  theatreName: th.name,
+                                  screenName: th.facilities[0] || 'Screen 1 - 4K Dolby',
+                                  date: new Date().toISOString().split('T')[0],
+                                  time: time,
+                                });
+                                setCurrentView('booking');
+                              }}
+                            >
+                              <strong className="text-white d-block">{time}</strong>
+                              <span className="badge badge-gold" style={{ fontSize: '9px' }}>₹200 - ₹450</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- 4. SEAT BOOKING MATRIX VIEW --- */}
+            {currentView === 'booking' && (
+              <div>
+                <button className="btn btn-sm btn-link text-secondary text-decoration-none p-0 mb-3" onClick={() => setCurrentView('details')}>
+                  ← Change Showtime
+                </button>
+
+                <div className="row g-4">
+                  <div className="col-12 col-lg-8">
+                    <div className="cinema-card p-4">
+                      {/* Cinema Curved Screen */}
+                      <div className="mb-4 mx-auto text-center" style={{ maxWidth: '500px' }}>
+                        <div className="screen-curve mb-2"></div>
+                        <span className="text-secondary small text-uppercase" style={{ letterSpacing: '4px', fontSize: '10px' }}>ALL EYES THIS WAY • CINEMA SCREEN</span>
+                      </div>
+
+                      {/* 60-Seat Matrix */}
+                      <div className="d-flex flex-column gap-2 align-items-center mb-4">
+                        {['A', 'B', 'C', 'D', 'E', 'F'].map(r => (
+                          <div key={r} className="d-flex align-items-center gap-2">
+                            <span className="text-secondary small fw-bold" style={{ width: '20px' }}>{r}</span>
+                            <div className="d-flex gap-1 gap-sm-2">
+                              {seatMatrix.filter(s => s.row === r).map(seat => {
+                                const isSel = selectedSeats.includes(seat.seatId);
+                                const isBooked = seat.status === 'booked';
+                                return (
+                                  <button
+                                    key={seat.seatId}
+                                    type="button"
+                                    className={`seat-btn ${isSel ? 'selected' : isBooked ? 'booked' : 'available'}`}
+                                    disabled={isBooked}
+                                    onClick={() => handleSeatClick(seat)}
+                                    title={`${seat.seatId} (₹${seat.price})`}
+                                  >
+                                    {seat.col}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <span className="text-secondary small fw-bold" style={{ width: '20px' }}>{r}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Legend */}
+                      <div className="d-flex flex-wrap justify-content-center gap-4 pt-3 border-top border-secondary border-opacity-25 small text-secondary">
+                        <div className="d-flex align-items-center gap-1"><div className="seat-btn available" style={{ cursor: 'default' }}></div> Available</div>
+                        <div className="d-flex align-items-center gap-1"><div className="seat-btn selected" style={{ cursor: 'default' }}></div> Selected</div>
+                        <div className="d-flex align-items-center gap-1"><div className="seat-btn booked" style={{ cursor: 'default' }}></div> Sold Out</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary Sidebar */}
+                  <div className="col-12 col-lg-4">
+                    <div className="cinema-card p-4 sticky-top" style={{ top: '80px' }}>
+                      <h5 className="fw-bold text-white mb-3 pb-2 border-bottom border-secondary border-opacity-25">Order Summary</h5>
+                      <div className="d-flex gap-3 mb-3">
+                        <img src={selectedMovie.poster} alt={selectedMovie.title} className="rounded object-fit-cover" style={{ width: 60, height: 85 }} />
+                        <div>
+                          <h6 className="text-white fw-bold mb-1">{selectedMovie.title}</h6>
+                          <span className="text-secondary small d-block">{selectedShow?.theatreName}</span>
+                          <span className="text-warning small d-block">{selectedShow?.date} • {selectedShow?.time}</span>
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <span className="text-secondary small d-block mb-1">Selected Seats:</span>
+                        {selectedSeats.length === 0 ? (
+                          <span className="text-secondary small fst-italic">No seats picked yet</span>
+                        ) : (
+                          <div className="d-flex flex-wrap gap-1">
+                            {selectedSeats.map(s => <span key={s} className="badge badge-gold fs-6">{s}</span>)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-top border-secondary border-opacity-25 pt-2 mb-3 small">
+                        <div className="d-flex justify-content-between text-secondary mb-1"><span>Base Ticket Price</span><span className="text-white">₹{ticketTotal}</span></div>
+                        <div className="d-flex justify-content-between text-secondary mb-1"><span>Convenience Fee</span><span className="text-white">₹{convFee}</span></div>
+                        <div className="d-flex justify-content-between text-secondary mb-1"><span>GST Tax (18%)</span><span className="text-white">₹{gst}</span></div>
+                        <div className="d-flex justify-content-between text-white fw-bold fs-5 pt-2 border-top border-secondary border-opacity-25 mt-2"><span>Total</span><span className="text-warning">₹{grandTotal}</span></div>
+                      </div>
+
+                      <button className="btn glow-btn w-100 py-2.5" disabled={selectedSeats.length === 0} onClick={() => setCurrentView('checkout')}>
+                        Proceed to Payment (₹{grandTotal})
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- 5. CHECKOUT & PAYMENT VIEW --- */}
+            {currentView === 'checkout' && (
+              <div className="row justify-content-center">
+                <div className="col-12 col-md-8 col-lg-7">
+                  <div className="cinema-card p-3 mb-3 d-flex justify-content-between align-items-center border-warning border-opacity-50">
+                    <span className="small text-white"><i className="bi bi-clock-history text-warning me-1"></i>Seats held for checkout: <strong>{selectedSeats.join(', ')}</strong></span>
+                    <span className="badge badge-gold font-monospace fs-6">{Math.floor(lockTimer / 60)}:{String(lockTimer % 60).padStart(2, '0')}</span>
+                  </div>
+
+                  <div className="cinema-card p-4 mb-4">
+                    <h5 className="fw-bold text-white mb-3">Customer Information</h5>
+                    <div className="row g-2 mb-4">
+                      <div className="col-sm-6"><input type="text" className="form-control cinema-input" defaultValue={user.name} /></div>
+                      <div className="col-sm-6"><input type="email" className="form-control cinema-input" defaultValue={user.email} /></div>
+                    </div>
+
+                    <h5 className="fw-bold text-white mb-3">Simulated Payment Gateway</h5>
+                    <div className="p-3 rounded bg-dark bg-opacity-75 border border-secondary border-opacity-25 mb-4">
+                      <div className="d-flex align-items-center gap-2 mb-3">
+                        <i className="bi bi-credit-card text-danger fs-5"></i>
+                        <span className="text-white fw-bold">Test Credit / Debit Card</span>
+                      </div>
+                      <div className="row g-2">
+                        <div className="col-12"><input type="text" className="form-control cinema-input font-monospace" defaultValue="4242 •••• •••• 4242" /></div>
+                        <div className="col-6"><input type="text" className="form-control cinema-input font-monospace" defaultValue="12/28" /></div>
+                        <div className="col-6"><input type="password" className="form-control cinema-input font-monospace" defaultValue="888" /></div>
+                      </div>
+                    </div>
+
+                    <button className="btn glow-btn w-100 py-3 fs-5" onClick={handleConfirmPayment}>
+                      <i className="bi bi-shield-check me-2"></i>Pay Securely ₹{grandTotal}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- 6. BOOKING CONFIRMATION & TICKET VIEW --- */}
+            {currentView === 'success' && latestBooking && (
+              <div className="row justify-content-center">
+                <div className="col-12 col-md-8 col-lg-7">
+                  <div className="text-center mb-4">
+                    <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '48px' }}></i>
+                    <h2 className="fw-black text-white mt-2">Booking Confirmed!</h2>
+                    <p className="text-secondary small">Your cinema e-ticket has been generated.</p>
+                  </div>
+
+                  <div className="ticket-wrapper mb-4">
+                    <div className="ticket-notch-left"></div>
+                    <div className="ticket-notch-right"></div>
+                    <div className="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom border-secondary border-opacity-25">
+                      <span className="text-secondary small">Pass Reference: <strong className="text-warning font-monospace">{latestBooking.bookingNumber}</strong></span>
+                      <span className="badge badge-blue">CONFIRMED</span>
+                    </div>
+
+                    <div className="row g-3 align-items-center mb-3">
+                      <div className="col-4 col-sm-3 text-center">
+                        <img src={latestBooking.moviePoster} alt={latestBooking.movieTitle} className="rounded w-100 object-fit-cover" style={{ maxHeight: '130px' }} />
+                      </div>
+                      <div className="col-8 col-sm-9">
+                        <h4 className="text-white fw-bold mb-1">{latestBooking.movieTitle}</h4>
+                        <span className="text-secondary small d-block">{latestBooking.theatreName}</span>
+                        <span className="text-light small d-block">Screen: {latestBooking.screenName}</span>
+                        <span className="text-warning small d-block">Schedule: {latestBooking.showDate} • {latestBooking.showTime}</span>
+                        <div className="mt-2"><span className="text-secondary small">Seats:</span> <span className="badge badge-gold fs-6">{latestBooking.seats.join(', ')}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="d-flex justify-content-between align-items-center pt-3 border-top border-secondary border-opacity-25">
+                      <div><span className="text-secondary small d-block">Amount Paid:</span><strong className="text-success fs-5">₹{latestBooking.totalAmount}</strong></div>
+                      <button className="btn btn-outline-light btn-sm" onClick={() => window.print()}><i className="bi bi-printer me-1"></i> Print Ticket</button>
+                    </div>
+                  </div>
+
+                  <div className="d-flex justify-content-center gap-3">
+                    <button className="btn btn-outline-secondary" onClick={() => setCurrentView('my-bookings')}>View All Bookings</button>
+                    <button className="btn glow-btn" onClick={() => setCurrentView('home')}>Book Another Movie</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- 7. MY BOOKINGS VIEW --- */}
+            {currentView === 'my-bookings' && (
+              <div>
+                <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+                  <div>
+                    <h2 className="fw-black text-white mb-0">My Cinema Bookings</h2>
+                    <span className="text-secondary small">Access and manage all your cinema tickets</span>
+                  </div>
+                  <button className="btn glow-btn btn-sm" onClick={() => setCurrentView('home')}>+ Book New Ticket</button>
+                </div>
+
+                <div className="d-flex flex-column gap-3 mb-5">
+                  {bookings.map(b => (
+                    <div key={b._id} className="cinema-card p-3 p-md-4">
+                      <div className="row g-3 align-items-center">
+                        <div className="col-3 col-sm-2 text-center">
+                          <img src={b.moviePoster} alt={b.movieTitle} className="rounded w-100 object-fit-cover" style={{ maxHeight: '110px' }} />
+                        </div>
+                        <div className="col-9 col-sm-7">
+                          <div className="d-flex align-items-center gap-2 mb-1">
+                            <h5 className="text-white fw-bold mb-0">{b.movieTitle}</h5>
+                            <span className={`badge ${b.bookingStatus === 'confirmed' ? 'badge-blue' : 'badge-red'}`}>{b.bookingStatus.toUpperCase()}</span>
+                          </div>
+                          <span className="text-secondary small d-block">{b.theatreName} - {b.screenName}</span>
+                          <span className="text-light small d-block">{b.showDate} • {b.showTime}</span>
+                          <span className="text-secondary small">Seats: <strong className="text-warning">{b.seats.join(', ')}</strong></span>
+                        </div>
+                        <div className="col-12 col-sm-3 text-sm-end pt-2 pt-sm-0">
+                          <span className="text-success fw-bold fs-5 d-block">₹{b.totalAmount}</span>
+                          <div className="d-flex flex-wrap justify-content-sm-end gap-2 mt-2">
+                            <button className="btn btn-sm btn-outline-light" onClick={() => setTicketModalBooking(b)}><i className="bi bi-ticket-perforated"></i> View</button>
+                            {b.bookingStatus === 'confirmed' && (
+                              <button className="btn btn-sm btn-outline-danger" onClick={() => handleCancelBooking(b._id)}>Cancel</button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* --- 8. ADMIN DASHBOARD VIEW --- */}
+            {currentView === 'admin' && (
+              <div>
+                <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+                  <div>
+                    <h2 className="fw-black text-white mb-0"><i className="bi bi-shield-check text-warning me-2"></i>Cinema Administration</h2>
+                    <span className="text-secondary small">Live revenue metrics, movie management and bookings audit</span>
+                  </div>
+                  <button className="btn btn-outline-secondary btn-sm" onClick={() => setCurrentView('home')}>Exit Admin</button>
+                </div>
+
+                {/* KPI Metrics */}
+                <div className="row row-cols-2 row-cols-lg-4 g-3 mb-4">
+                  <div className="col">
+                    <div className="cinema-card p-3">
+                      <span className="text-secondary small text-uppercase fw-bold">Gross Revenue</span>
+                      <h3 className="fw-black text-success mt-1">₹{bookings.filter(b => b.bookingStatus === 'confirmed').reduce((acc, c) => acc + c.totalAmount, 0).toLocaleString()}</h3>
+                      <span className="text-secondary" style={{ fontSize: '11px' }}>{bookings.filter(b => b.bookingStatus === 'confirmed').length} Confirmed Sales</span>
+                    </div>
+                  </div>
+                  <div className="col">
+                    <div className="cinema-card p-3">
+                      <span className="text-secondary small text-uppercase fw-bold">Active Movies</span>
+                      <h3 className="fw-black text-white mt-1">{movies.length}</h3>
+                      <span className="text-secondary" style={{ fontSize: '11px' }}>In Cinema Theatres</span>
+                    </div>
+                  </div>
+                  <div className="col">
+                    <div className="cinema-card p-3">
+                      <span className="text-secondary small text-uppercase fw-bold">Partner Theatres</span>
+                      <h3 className="fw-black text-white mt-1">{THEATRES.length}</h3>
+                      <span className="text-secondary" style={{ fontSize: '11px' }}>Mumbai, BLR, Delhi, HYD</span>
+                    </div>
+                  </div>
+                  <div className="col">
+                    <div className="cinema-card p-3">
+                      <span className="text-secondary small text-uppercase fw-bold">Total Bookings</span>
+                      <h3 className="fw-black text-warning mt-1">{bookings.length}</h3>
+                      <span className="text-secondary" style={{ fontSize: '11px' }}>Audit log records</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Add Movie Form */}
+                <div className="cinema-card p-4 mb-4">
+                  <h5 className="fw-bold text-white mb-3"><i className="bi bi-plus-circle text-danger me-2"></i>Add Movie to Catalog</h5>
+                  <form onSubmit={handleAddMovie}>
+                    <div className="row g-3">
+                      <div className="col-sm-6"><input type="text" name="title" className="form-control cinema-input" placeholder="Movie Title (e.g. Inception)" required /></div>
+                      <div className="col-sm-3"><input type="text" name="director" className="form-control cinema-input" placeholder="Director" required /></div>
+                      <div className="col-sm-3"><input type="number" step="0.1" name="rating" className="form-control cinema-input" placeholder="Rating (e.g. 8.8)" required /></div>
+                      <div className="col-sm-4"><input type="text" name="genre" className="form-control cinema-input" placeholder="Genres (e.g. Action, Sci-Fi)" required /></div>
+                      <div className="col-sm-4"><input type="number" name="duration" className="form-control cinema-input" placeholder="Duration (mins)" required /></div>
+                      <div className="col-sm-4">
+                        <select name="certificate" className="form-select cinema-input text-white">
+                          <option value="UA">UA (Parental Guidance)</option>
+                          <option value="U">U (Universal)</option>
+                          <option value="A">A (Adults)</option>
+                        </select>
+                      </div>
+                      <div className="col-12"><input type="url" name="poster" className="form-control cinema-input" placeholder="Poster Image URL (optional)" /></div>
+                      <div className="col-12"><textarea name="description" rows="2" className="form-control cinema-input" placeholder="Movie synopsis..." required></textarea></div>
+                    </div>
+                    <button type="submit" className="btn glow-btn btn-sm mt-3 px-4">Save & Publish Movie</button>
+                  </form>
+                </div>
+              </div>
+            )}
+          </main>
+
+          {/* Ticket Popup Modal */}
+          {ticketModalBooking && (
+            <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 1060 }}>
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content cinema-modal border-0 p-4">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h5 className="modal-title fw-bold text-white mb-0">Official E-Ticket</h5>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setTicketModalBooking(null)}></button>
+                  </div>
+                  <div className="ticket-wrapper text-center mb-3">
+                    <h4 className="text-white fw-bold mb-1">{ticketModalBooking.movieTitle}</h4>
+                    <span className="text-secondary small d-block mb-2">{ticketModalBooking.theatreName} ({ticketModalBooking.screenName})</span>
+                    <span className="badge badge-gold fs-5 mb-2">Seats: {ticketModalBooking.seats.join(', ')}</span>
+                    <div className="text-secondary small">{ticketModalBooking.showDate} • {ticketModalBooking.showTime}</div>
+                    <div className="mt-3 p-2 bg-white d-inline-block rounded">
+                      <i className="bi bi-qr-code text-dark" style={{ fontSize: '80px' }}></i>
+                    </div>
+                    <span className="d-block text-secondary font-monospace small mt-1">{ticketModalBooking.bookingNumber}</span>
+                  </div>
+                  <button className="btn glow-btn w-100" onClick={() => window.print()}>Print / Download Ticket</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <footer className="mt-auto py-4 border-top border-secondary border-opacity-25 bg-dark">
+            <div className="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 text-secondary small">
+              <span>© 2026 IMovies Entertainment Inc. Movie ticket booking made simple.</span>
+              <span>MERN Stack Cinema Platform • Ready for Evaluation</span>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    // Render the App
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
